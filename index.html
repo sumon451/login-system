@@ -1,2 +1,33 @@
-<a href="https://wa.me/qr/WFQTKIP4J2O3K1" target="_blank" style="position:fixed; bottom:20px; right:20px; background:#25D366; color:white; padding:12px 20px; border-radius:50px; text-decoration:none; font-weight:bold; box-shadow:0 4px 10px rgba(0,0,0,0.3); z-index:9999;">WhatsApp</a>
-<a href="https://wa.me/qr/WFQTKIP4J2O3K1" target="_blank" style="position:fixed; bottom:20px; right:20px; background:#25D366; color:white; padding:12px 20px; border-radius:50px; text-decoration:none; font-weight:bold; box-shadow:0 4px 10px rgba(0,0,0,0.3); z-index:9999;">WhatsApp</a>
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My QR Login</title>
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<style>
+body{text-align:center;font-family:sans-serif;padding-top:30px;background:#f0f2f5}
+#box{background:white;padding:25px;border-radius:15px;max-width:360px;margin:auto;box-shadow:0 4px 15px rgba(0,0,0,0.1)}
+#qrcode{display:flex;justify-content:center;margin:20px}
+</style>
+</head>
+<body>
+<div id="box">
+<h2>🔐 My QR Login</h2>
+<div id="qrcode"></div>
+<p id="status">অন্য ফোন দিয়ে স্ক্যান করুন</p>
+</div>
+<script>
+const SERVER_URL = "https://login-system-qr-login.onrender.com";
+const socket = io(SERVER_URL);
+const sessionId = Math.random().toString(36).substring(7);
+new QRCode(document.getElementById("qrcode"), {text: SERVER_URL + "/scan/" + sessionId, width:200, height:200});
+socket.emit("create-session", sessionId);
+socket.on("logged-in", ()=>{ 
+ document.getElementById("status").innerHTML="✅ Login Success!";
+ alert("Login Success!");
+ window.location.href = "https://google.com";
+});
+</script>
+</body>
+</html>
