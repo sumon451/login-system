@@ -1,60 +1,21 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Laptop - QR Login</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<style>
-body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;background:#f2f5f9;margin:0}
-.card{background:white;padding:30px;border-radius:15px;box-shadow:0px 4px 20px rgba(0,0,0,0.1);text-align:center;min-width:300px}
-#qrcode{margin:20px auto;display:flex;justify-content:center}
-.success{color:green;font-size:20px;font-weight:bold}
-#status{margin-top:15px}
-</style>
-</head>
-<body>
-<div class="card">
-<h3>QR দিয়ে লগইন করুন</h3>
-<div id="qrcode"></div>
-<div id="status">QR লোড হচ্ছে...</div>
-<div id="phone"></div>
-</div>
-<script>
-const SUPABASE_URL = "https://clmevhlhopzxtvmxjkkll.supabase.co";
-const SUPABASE_KEY = "sb_publishable_hyjy48XIJ1r8TXgwaN0qGw_kYcmCqP4";
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-let sessionId = null;
-async function createSession(){
-    sessionId = crypto.randomUUID();
-    document.getElementById('status').innerText = "QR তৈরি হচ্ছে...";
-    const { error } = await supabaseClient.from('qr_sessions').insert([{ id: sessionId, status: 'pending' }]);
-    if(error){ document.getElementById('status').innerText = "Error: " + error.message; return; }
-    document.getElementById('qrcode').innerHTML = "";
-    const scanUrl = window.location.origin + window.location.pathname.replace('index.html','') + 'scan.html?sessionId=' + sessionId;
-    new QRCode(document.getElementById("qrcode"), { text: scanUrl, width: 220, height: 220 });
-    document.getElementById('status').innerText = "মোবাইল দিয়ে স্ক্যান করুন";
-    listenForLogin();
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Permanent QR</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><style>body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f0f2f5;margin:0}.card{background:#fff;padding:30px;border-radius:16px;text-align:center;width:360px;box-shadow:0 8px 25px rgba(0,0,0,.1)}#qrcode{margin:20px auto;display:flex;justify-content:center}</style></head><body><div class="card"><h3>আমার স্থায়ী QR</h3><p style="font-size:12px;color:#666">এই QR জীবনেও বদলাবে না</p><div id="qrcode"></div><div id="status" style="color:#25D366;font-weight:bold">লোড হচ্ছে...</div><div id="userInfo"></div><div style="font-size:11px;word-break:break-all;background:#f5f5f5;padding:10px;margin-top:15px;border-radius:8px" id="shareLink"></div><button onclick="navigator.clipboard.writeText(document.getElementById('shareLink').innerText);alert('লিংক কপি! এখন অন্য ফোনে পাঠাও')" style="margin-top:10px;padding:12px;width:100%;background:#111;color:#fff;border:none;border-radius:8px">Copy Link - অন্য ফোনে পাঠাও</button></div><script>
+const SUPABASE_URL="https://thqyhrffgeondpzzngjr.supabase.co";
+const SUPABASE_KEY="sb_publishable_O9MduW2ScpV76vtgeRIbfg_dp-VJ8C8";
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let deviceId=localStorage.getItem("my_permanent_device_id");
+if(!deviceId){deviceId="device_"+crypto.randomUUID();localStorage.setItem("my_permanent_device_id",deviceId);}
+async function init(){
+ await sb.from('permanent_devices').upsert([{device_id:deviceId,status:'pending'}],{onConflict:'device_id'});
+ const scanUrl=location.origin+location.pathname.replace('index.html','')+"scan.html?deviceId="+deviceId;
+ document.getElementById("shareLink").innerText=scanUrl;
+ document.getElementById("qrcode").innerHTML="";
+ new QRCode(document.getElementById("qrcode"),{text:scanUrl,width:220,height:220});
+ document.getElementById("status").innerText="QR রেডি - লিংক পাঠাও বা স্ক্যান করো";
+ const{data}=await sb.from('permanent_devices').select('*').eq('device_id',deviceId).single();
+ if(data?.status==='approved') showUser(data.user_phone);
+ sb.channel('perm-'+deviceId).on('postgres_changes',{event:'UPDATE',schema:'public',table:'permanent_devices',filter:`device_id=eq.${deviceId}`},p=>{if(p.new.status==='approved')showUser(p.new.user_phone)}).subscribe();
 }
-function listenForLogin(){
-    supabaseClient.channel('qr-login-' + sessionId).on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'qr_sessions', filter: `id=eq.${sessionId}` }, payload => {
-        if(payload.new.status === 'approved'){
-            document.getElementById('status').innerText = 'লগইন সফল!';
-            document.getElementById('phone').innerText = 'ফোন: ' + payload.new.user_phone;
-            document.getElementById('qrcode').innerHTML = '✅';
-        }
-    }).subscribe();
-    setInterval(async ()=>{
-        let { data } = await supabaseClient.from('qr_sessions').select('*').eq('id', sessionId).single();
-        if(data && data.status === 'approved'){
-            document.getElementById('status').innerText = 'লগইন সফল!';
-            document.getElementById('phone').innerText = 'ফোন: ' + data.user_phone;
-            document.getElementById('qrcode').innerHTML = '✅';
-        }
-    }, 2000);
-}
-createSession();
-</script>
-</body>
-</html>
+function showUser(p){document.getElementById("status").innerText="✅ লগইন হয়েছে";document.getElementById("userInfo").innerHTML="<h2 style='color:green'>"+p+"</h2><p>লগইন সফল</p><button onclick='logout()' style='padding:8px 15px;margin-top:10px'>Logout</button>";}
+async function logout(){await sb.from('permanent_devices').update({status:'pending',user_phone:null}).eq('device_id',deviceId);location.reload();}
+init();
+</script></body></html>
