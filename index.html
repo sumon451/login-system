@@ -21,51 +21,30 @@ body{font-family:sans-serif;display:flex;justify-content:center;align-items:cent
 <div id="status">QR লোড হচ্ছে...</div>
 <div id="phone"></div>
 </div>
-
 <script>
-// --- এখানে তোমার Supabase বসাও ---
 const SUPABASE_URL = "https://clmevhlhopzxtvmxjkkll.supabase.co";
-const SUPABASE_KEY = "PASTE_YOUR_FULL_PUBLISHABLE_KEY_HERE"; // এখানে sb_publishable_hvjy48XJ... পুরোটা বসাও
-
+const SUPABASE_KEY = "sb_publishable_hyjy48XIJ1r8TXgwaN0qGw_kYcmCqP4";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let sessionId = null;
-
 async function createSession(){
     sessionId = crypto.randomUUID();
     document.getElementById('status').innerText = "QR তৈরি হচ্ছে...";
-    
     const { error } = await supabaseClient.from('qr_sessions').insert([{ id: sessionId, status: 'pending' }]);
-    
-    if(error){
-        document.getElementById('status').innerText = "Error: " + error.message;
-        console.error(error);
-        return;
-    }
-
+    if(error){ document.getElementById('status').innerText = "Error: " + error.message; return; }
     document.getElementById('qrcode').innerHTML = "";
     const scanUrl = window.location.origin + window.location.pathname.replace('index.html','') + 'scan.html?sessionId=' + sessionId;
-    
-    new QRCode(document.getElementById("qrcode"), {
-        text: scanUrl,
-        width: 220,
-        height: 220
-    });
-    
+    new QRCode(document.getElementById("qrcode"), { text: scanUrl, width: 220, height: 220 });
     document.getElementById('status').innerText = "মোবাইল দিয়ে স্ক্যান করুন";
     listenForLogin();
 }
-
 function listenForLogin(){
-    supabaseClient.channel('qr-login-' + sessionId)
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'qr_sessions', filter: `id=eq.${sessionId}` }, payload => {
+    supabaseClient.channel('qr-login-' + sessionId).on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'qr_sessions', filter: `id=eq.${sessionId}` }, payload => {
         if(payload.new.status === 'approved'){
             document.getElementById('status').innerText = 'লগইন সফল!';
             document.getElementById('phone').innerText = 'ফোন: ' + payload.new.user_phone;
             document.getElementById('qrcode').innerHTML = '✅';
         }
     }).subscribe();
-
-    // Polling backup যদি Realtime না চলে
     setInterval(async ()=>{
         let { data } = await supabaseClient.from('qr_sessions').select('*').eq('id', sessionId).single();
         if(data && data.status === 'approved'){
@@ -75,7 +54,6 @@ function listenForLogin(){
         }
     }, 2000);
 }
-
 createSession();
 </script>
 </body>
