@@ -1,37 +1,5 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Phone - Confirm</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;background:#eef2f7;margin:0}
-.card{background:white;padding:30px;border-radius:15px;box-shadow:0 4px 20px rgba(0,0,0,0.1);text-align:center}
-button{padding:12px 25px;background:green;color:white;border:none;border-radius:8px;font-size:16px}
-input{padding:10px;width:90%;margin:10px 0;border-radius:8px;border:1px solid #ccc}
-</style>
-</head>
-<body>
-<div class="card">
-<h3>লগইন কনফার্ম করুন</h3>
-<input type="text" id="phone" placeholder="ফোন নম্বর দিন">
-<br><br>
-<button onclick="approve()">Confirm Login</button>
-<div id="status" style="margin-top:15px"></div>
-</div>
-<script>
-const SUPABASE_URL = "https://clmevhlhopzxtvmxjkkll.supabase.co";
-const SUPABASE_KEY = "sb_publishable_hyjy48XIJ1r8TXgwaN0qGw_kYcmCqP4";
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-const sessionId = new URLSearchParams(window.location.search).get('sessionId');
-async function approve(){
-  const phone = document.getElementById('phone').value;
-  if(!phone){ alert('ফোন নম্বর দিন'); return; }
-  const { error } = await supabaseClient.from('qr_sessions').update({ status: 'approved', user_phone: phone }).eq('id', sessionId);
-  if(error){ document.getElementById('status').innerText = "Error: " + error.message; }
-  else { document.getElementById('status').innerText = "✅ সফল! ল্যাপটপ দেখুন"; }
-}
-</script>
-</body>
-</html>
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Login Confirm</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script><style>body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;background:#eef2f7;margin:0}.card{background:#fff;padding:30px;border-radius:15px;text-align:center;width:320px}input{padding:14px;width:90%;border-radius:10px;border:1px solid #ccc}button{padding:14px;width:100%;background:#25D366;color:#fff;border:none;border-radius:10px;margin-top:15px;font-size:16px}</style></head><body><div class="card"><h3>এই ডিভাইসে লগইন করবেন?</h3><input id="phone" placeholder="আপনার নাম"><button onclick="approve()">Confirm Login</button><div id="msg" style="margin-top:15px"></div></div><script>
+const sb=supabase.createClient("https://thqyhrffgeondpzzngjr.supabase.co","sb_publishable_O9MduW2ScpV76vtgeRIbfg_dp-VJ8C8");
+const deviceId=new URLSearchParams(location.search).get('deviceId');
+async function approve(){const p=document.getElementById("phone").value;if(!p)return alert('নাম দিন');await sb.from('permanent_devices').update({status:'approved',user_phone:p}).eq('device_id',deviceId);document.getElementById("msg").innerText="✅ হয়ে গেছে! প্রথম ফোনে দেখুন";}
+</script></body></html>
