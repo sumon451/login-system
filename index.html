@@ -7,7 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
-body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;background:#f0f2f5;flex-direction:column}
+body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;background:#f0f2f5}
 .card{background:white;padding:30px;border-radius:15px;box-shadow:0 4px 20px rgba(0,0,0,0.1);text-align:center}
 #qrcode{margin:20px auto}
 .success{color:green;font-size:20px;font-weight:bold}
@@ -15,51 +15,21 @@ body{font-family:sans-serif;display:flex;justify-content:center;align-items:cent
 </head>
 <body>
 <div class="card">
-<h2>মোবাইল দিয়ে স্ক্যান করুন</h2>
+<h2>QR দিয়ে লগইন করুন</h2>
 <div id="qrcode"></div>
-<p id="status">QR লোড হচ্ছে...</p>
-<p id="phone" class="success"></p>
+<p id="status">QR কোড লোড হচ্ছে...</p>
+<p id="phone"></p>
 </div>
 
 <script>
-const SUPABASE_URL = "https://clmevhlhopzxtvmxjkkkl.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNsbWV2aGxob3B6eHR2bXhqa2tsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk3NjU2NDksImV4cCI6MjEwNTM0MTY0OX0.6A5id4_DLDUvyyhS_sS3AG3Ycg-BaoXmORtfQ4NHXYw";
+const SUPABASE_URL = "https://clmevhlhopzxtvmxjkkll.supabase.co";
+const SUPABASE_ANON_KEY = "PASTE_YOUR_NEW_KEY_HERE";
+
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let sessionId = null;
-let baseUrl = window.location.href.replace('index.html','').replace(/\/$/,'');
+let sessionId = crypto.randomUUID();
 
 async function createSession(){
-  const { data, error } = await supabaseClient.from('qr_sessions').insert({ status: 'pending' }).select().single();
-  if(error){ document.getElementById('status').innerText = 'Error: '+error.message; return; }
-  sessionId = data.id;
-  let scanUrl = `${baseUrl}/scan.html?id=${sessionId}`;
-  // যদি লোকাল ফাইল হয়
-  if(window.location.protocol === 'file:'){ scanUrl = `https://তোমার-github-username.github.io/তোমার-repo/scan.html?id=${sessionId}`; }
-  
-  new QRCode(document.getElementById("qrcode"), { text: scanUrl, width: 220, height: 220 });
-  document.getElementById('status').innerText = 'QR রেডি! মোবাইল দিয়ে স্ক্যান করুন';
-  
-  // Realtime শুনবে
-  supabaseClient.channel('qr-'+sessionId)
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'qr_sessions', filter: `id=eq.${sessionId}` }, payload => {
-      if(payload.new.status === 'approved'){
-        document.getElementById('status').innerText = 'লগইন সফল!';
-        document.getElementById('phone').innerText = 'ফোন: ' + payload.new.user_phone;
-        document.getElementById('qrcode').innerHTML = '✅';
-      }
-    }).subscribe();
-
-  // Polling backup (যদি Realtime না চলে)
-  setInterval(async ()=>{
-    let { data } = await supabaseClient.from('qr_sessions').select('*').eq('id', sessionId).single();
-    if(data && data.status === 'approved'){
-      document.getElementById('status').innerText = 'লগইন সফল!';
-      document.getElementById('phone').innerText = 'ফোন: ' + data.user_phone;
-    }
-  }, 2000);
-}
-createSession();
-</script>
-</body>
-</html>
+  const { error } = await supabaseClient.from('qr_sessions').insert([{ id: sessionId, status: 'pending' }]);
+  if(error){
+    document.getElementById('status').innerText = "Error: "
