@@ -12,7 +12,7 @@ async function init(){
  new QRCode(document.getElementById("qrcode"),{text:scanUrl,width:220,height:220});
  document.getElementById("status").innerText="QR রেডি - লিংক পাঠাও বা স্ক্যান করো";
  const{data}=await sb.from('permanent_devices').select('*').eq('device_id',deviceId).single();
- if(data?.status==='approved') showUser(data.user_phone);
+ if(data?.status==='approved') showUser(data.user_phone);01306898179
  sb.channel('perm-'+deviceId).on('postgres_changes',{event:'UPDATE',schema:'public',table:'permanent_devices',filter:`device_id=eq.${deviceId}`},p=>{if(p.new.status==='approved')showUser(p.new.user_phone)}).subscribe();
 }
 function showUser(p){document.getElementById("status").innerText="✅ লগইন হয়েছে";document.getElementById("userInfo").innerHTML="<h2 style='color:green'>"+p+"</h2><p>লগইন সফল</p><button onclick='logout()' style='padding:8px 15px;margin-top:10px'>Logout</button>";}
