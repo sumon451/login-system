@@ -32,4 +32,4 @@ let sessionId = crypto.randomUUID();
 async function createSession(){
   const { error } = await supabaseClient.from('qr_sessions').insert([{ id: sessionId, status: 'pending' }]);
   if(error){
-    document.getElementById('status').innerText = "Error: "
+    document.getElementById('status').innerText = "Error: "https://clmevhlhopzxtvmxjkkll.supabase.co
